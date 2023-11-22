@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "189102940741",
+    "project_id": "ring-map-addf0",
+    "storage_bucket": "ring-map-addf0.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:189102940741:android:f2138babf9ac205b35392c",
+        "android_client_info": {
+          "package_name": "com.example.ringmap"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB9gSxKQu_bV3XQLFJ69yrSjvj55q3uoFE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

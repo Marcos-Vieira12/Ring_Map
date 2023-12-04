@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -83,6 +84,9 @@ public class Tela_Cadastro extends AppCompatActivity {
 
                     // Sucesso no cadastro, inicie a MainActivity
                     FirebaseAuth.getInstance().signOut();
+
+
+                    Toast.makeText(Tela_Cadastro.this, "Cadastro realizado com sucesso.", Toast.LENGTH_SHORT).show();
                     Intent intent = new Intent(Tela_Cadastro.this, MainActivity.class);
                     startActivity(intent);
 

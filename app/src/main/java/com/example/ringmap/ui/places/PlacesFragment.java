@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -25,11 +26,11 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PlacesFragment extends Fragment {
+public class PlacesFragment extends Fragment implements FavoriteLocationsAdapter.OnItemClickListener{
 
     private FragmentPlacesBinding binding;
 
-    private FavoriteLocationsAdapter adapter; // Adicione esta linha
+    private FavoriteLocationsAdapter adapter;
 
     FloatingActionButton mAddFab, mdeleteFab, mAddPlaceFab;
 
@@ -92,6 +93,8 @@ public class PlacesFragment extends Fragment {
 
         // Crie uma instância do seu adaptador
         adapter = new FavoriteLocationsAdapter();
+        adapter.setOnItemClickListener(this);
+
 
         RecyclerView recyclerView = root.findViewById(R.id.recyclerViewLocations);
         LinearLayoutManager layoutManager = new LinearLayoutManager(requireContext());
@@ -110,6 +113,7 @@ public class PlacesFragment extends Fragment {
                         List<FavoriteLocation> favoriteLocations = new ArrayList<>();
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             FavoriteLocation location = document.toObject(FavoriteLocation.class);
+                            location.setId(document.getId());
                             favoriteLocations.add(location);
                         }
                         updateUI(favoriteLocations);
@@ -118,7 +122,6 @@ public class PlacesFragment extends Fragment {
                         Log.e("Firestore", "Error getting documents.", task.getException());
                     }
                 });
-
         return root;
     }
 
@@ -146,5 +149,17 @@ public class PlacesFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+    }
+
+    @Override
+    public void onItemClick(FavoriteLocation favoriteLocation) {
+        AppCompatActivity activity = (AppCompatActivity) requireActivity();
+        Intent intent = new Intent(activity, Mapa.class);
+        intent.putExtra("Lat",favoriteLocation.getLocationPoint().getLatitude());
+        intent.putExtra("Lng",favoriteLocation.getLocationPoint().getLongitude());
+        intent.putExtra("Radius",favoriteLocation.getRadius());
+        intent.putExtra("Id",favoriteLocation.getId());
+
+        startActivity(intent);
     }
 }

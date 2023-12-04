@@ -1,23 +1,32 @@
 package com.example.ringmap;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.nfc.Tag;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.location.LocationRequest;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
 import android.widget.Toast;
+import android.Manifest;
 
+
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.gms.common.api.Status;
-import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -27,29 +36,52 @@ import com.google.android.libraries.places.api.model.RectangularBounds;
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
-import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.GeoPoint;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
-public class Mapa extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener {
+public class Mapa extends FragmentActivity implements LocationListener, PersistentNotificationService.OnServiceInteractionListener, OnMapReadyCallback, AlarmFragment.OnFragmentInteractionListener, ContentBottomFragment.OnFragmentInteractionListener, GoogleMap.OnMapClickListener {
 
     private GoogleMap mMap;
-
+    private boolean FLAG_ALARM = false;
     private Marker marker;
+    private Circle circle;
+    private String locationId = null;
+    private String locationName = null;
+    private LocationManager locationManager;
+    private PersistentNotificationService service = new PersistentNotificationService();
+    private static final long MIN_TIME = 500;  // atualização de localização a cada 5 segundos
+    private static final float MIN_DISTANCE = 0;  // atualização de localização a cada 10 metros
+
+    // Obtenha o FragmentManager
+    FragmentManager fragmentManager = getSupportFragmentManager();
+
+    // Crie uma transação para adicionar o fragmento ao FrameLayout
+    FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+
+    // Infle o layout do conteúdo no bottom_fragment
+
+    ContentBottomFragment contentBottomFragment = new ContentBottomFragment(); // Substitua pelo nome do seu Fragment
+
+    AlarmFragment alarmFragment = new AlarmFragment();
 
     private static final String TAG = "info";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mapa);
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_fragment);
         mapFragment.getMapAsync(this);
-
-        if(!Places.isInitialized()){
-            Places.initialize(getApplicationContext(),"AIzaSyC2gLStife8TZazXCPKyEs_v3MejlmdaCQ");
+        if (!Places.isInitialized()) {
+            Places.initialize(getApplicationContext(), "AIzaSyC2gLStife8TZazXCPKyEs_v3MejlmdaCQ");
         }
         PlacesClient PlacesClient = Places.createClient(this);
-
 
 
         // Initialize the AutocompleteSupportFragment.
@@ -60,6 +92,9 @@ public class Mapa extends FragmentActivity implements OnMapReadyCallback, Google
                 new LatLng(-4.970833, -39.015),
                 new LatLng(-4.970833, -39.015)
         ));
+
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
 
         autocompleteFragment.setCountries("BR");
 
@@ -82,50 +117,225 @@ public class Mapa extends FragmentActivity implements OnMapReadyCallback, Google
                 Toast.makeText(Mapa.this, "Erro: " + status.getStatusMessage(), Toast.LENGTH_SHORT).show();
             }
         });
-        // Obtenha o SupportMapFragment e notifique quando o mapa estiver pronto para ser usado
 
-        // Configura o AutocompleteSupportFragment
+        fragmentTransaction.replace(R.id.bottom_fragment, contentBottomFragment);
+        fragmentTransaction.detach(contentBottomFragment);
+        fragmentTransaction.commit();
 
-        }
 
-    public void jump(LatLng latLng) {
-        if (marker != null)
-            marker.remove();
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 14));
-        marker = mMap.addMarker(new MarkerOptions().position(latLng));
+
     }
 
+    @Override
+    public void onLocationChanged(@NonNull Location location) {
+        // Recebe atualizações de localização aqui
+        LatLng userLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+//        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLatLng,14));
+        //verifica se chegou no destino
+        if (FLAG_ALARM) {
+            boolean retorno = verify_destiny(userLatLng);
+            if (retorno == true) {
+                PersistentNotificationService.setCallback(this);
+                Intent serviceIntent = new Intent(Mapa.this, PersistentNotificationService.class);
+                startService(serviceIntent);
+            }
+        }
+    }
+
+    private boolean verify_destiny(LatLng userLatLng) {
+// Obtém as coordenadas do centro do círculo
+        if(circle == null || userLatLng == null){
+            return false;
+        }
+        double circleLatitude = circle.getCenter().latitude;
+        double circleLongitude = circle.getCenter().longitude;
+
+        // Calcula a distância entre o usuário e o centro do círculo
+        float[] distanceResult = new float[1];
+        Location.distanceBetween(userLatLng.latitude, userLatLng.longitude, circleLatitude, circleLongitude, distanceResult);
+
+        // Verifica se a distância é menor ou igual ao raio do círculo
+        return distanceResult[0] <= circle.getRadius();
+    }
+
+    @Override
+    public void onFragmentInteraction(String message) {
+        String[] args = message.split(" ");
+        switch (args[0]) {
+            case "editTextRadius":
+                circle.setRadius(Integer.parseInt(args[1]));
+                break;
+            case "button":
+                String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                LatLng position = marker.getPosition();
+                GeoPoint geoPoint = new GeoPoint(position.latitude, position.longitude);
+                Map<String, Object> dadosDocumento = new HashMap<>();
+                dadosDocumento.put("locationName", args[1]);
+                dadosDocumento.put("locationPoint", geoPoint);
+                dadosDocumento.put("radius", circle.getRadius());
+                FirebaseFirestore.getInstance().
+                        collection("usuarios")
+                        .document(userId)
+                        .collection("FavoriteLocations").add(dadosDocumento);
+//                Intent intent = new Intent(Mapa.this, tela_inicial.class);
+//                startActivity(intent);
+//                finish();
+                StartAlarm();
+                break;
+            case "CancelAlarm":
+                FLAG_ALARM = false;
+
+                fragmentTransaction = fragmentManager.beginTransaction();
+                fragmentTransaction.replace(R.id.bottom_fragment, contentBottomFragment);
+                fragmentTransaction.detach(alarmFragment);
+                fragmentTransaction.attach(contentBottomFragment);
+                fragmentTransaction.commit();
+                Toast.makeText(Mapa.this, "Alarme Cancelado", Toast.LENGTH_SHORT).show();
+
+                break;
+            default:
+
+                break;
+        }
+
+    }
+
+
+
+    private void StartAlarm() {
+        FLAG_ALARM = true;
+        fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.bottom_fragment, alarmFragment);
+        fragmentTransaction.commit();
+
+    }
+
+    public void jump(LatLng latLng, int radius) {
+        if (FLAG_ALARM == false){
+            if (marker != null)
+                marker.remove();
+            marker = mMap.addMarker(new MarkerOptions().position(latLng));
+
+            // Adicione ou atualize o círculo
+            if (circle == null) {
+                circle = mMap.addCircle(new CircleOptions()
+                        .center(latLng)
+                        .radius(radius)
+                        .strokeColor(Color.argb(255, 23, 61, 255))
+                        .fillColor(Color.argb(64, 0, 0, 255)));
+            } else {
+                circle.setCenter(latLng);
+                circle.setRadius(radius);
+            }
+            fragmentTransaction = fragmentManager.beginTransaction();
+            fragmentTransaction.attach(contentBottomFragment);
+            fragmentTransaction.commit();
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 14));
+        }
+
+
+
+    }
+    public void jump(LatLng latLng) {
+        // Chama a versão principal com o valor padrão de 500 para optionalValue
+        jump(latLng, 500);
+    }
 
 
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         mMap = googleMap;
+        Bundle extras = getIntent().getExtras();
+        if(extras != null){
 
-        LatLng quixada = new LatLng(-4.970833, -39.015);
-        marker = mMap.addMarker(new MarkerOptions().position(quixada).title("Quixadá"));
+            LatLng latLng = new LatLng(extras.getDouble("Lat"),extras.getDouble("Lng"));
+            jump(latLng, extras.getInt("Radius"));
+            locationId = extras.getString("Id");
+
+        } else{
+            Toast.makeText(Mapa.this, "Alarme Cancelado", Toast.LENGTH_SHORT).show();
+        }
+        // Habilitar a camada de tráfego para uma melhor visualização (opcional)
+        mMap.setTrafficEnabled(true);
+
+        // Habilitar a camada de localização do usuário
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+
+        }
+        mMap.setMyLocationEnabled(true);
+
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME, MIN_DISTANCE, (LocationListener) this);
+        Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        //LatLng quixada = new LatLng(location.getLatitude(),location.getLongitude());
+        //marker = mMap.addMarker(new MarkerOptions().position(quixada).title("Quixadá"));
 
         mMap.setOnMapClickListener(this::onMapClick);
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(quixada, 14));
+        //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(quixada, 14));
 
     }
 
     @Override
     public void onMapClick(LatLng latLng) {
-        mudar_marcador(latLng);
-
+        if (FLAG_ALARM == false)
+            mudar_marcador(latLng);
     }
+
+
+
+
 
     public void mudar_marcador(LatLng latLng) {
-        // Adiciona um marcador no local do clique
-        if (marker == null)
+        fragmentTransaction = fragmentManager.beginTransaction();
+        // Adiciona ou remove o marcador
+        if (marker == null) {
             marker = mMap.addMarker(new MarkerOptions().position(latLng));
-        else {
+
+            // Adiciona ou atualiza o círculo
+            if (circle == null) {
+                circle = mMap.addCircle(new CircleOptions()
+                        .center(latLng)
+                        .radius(500)
+                        .strokeColor(Color.argb(255, 23, 61, 255))
+                        .fillColor(Color.argb(64, 0, 0, 255)));
+            } else {
+                circle.setCenter(latLng);
+            }
+            fragmentTransaction.attach(contentBottomFragment);
+
+        } else {
             marker.remove();
             marker = null;
-        }
 
+            // Remove o círculo quando o marcador é removido
+            if (circle != null) {
+                circle.remove();
+                circle = null;
+            }
+            fragmentTransaction.detach(contentBottomFragment);
+
+        }
+        fragmentTransaction.commit();
     }
 
+    @Override
+    public void onServiceDataReceived(String data) {
+        if(data.equals("close")){
+            FLAG_ALARM = false;
+            fragmentTransaction = fragmentManager.beginTransaction();
+            fragmentTransaction.replace(R.id.bottom_fragment, contentBottomFragment);
+            fragmentTransaction.detach(alarmFragment);
+            fragmentTransaction.attach(contentBottomFragment);
+            fragmentTransaction.commit();
+        }
+    }
 }
 
 

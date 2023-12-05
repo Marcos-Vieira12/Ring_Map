@@ -20,10 +20,13 @@ import com.example.ringmap.R;
 import com.example.ringmap.databinding.FragmentPlacesBinding;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class PlacesFragment extends Fragment implements FavoriteLocationsAdapter.OnItemClickListener{
@@ -32,7 +35,7 @@ public class PlacesFragment extends Fragment implements FavoriteLocationsAdapter
 
     private FavoriteLocationsAdapter adapter;
 
-    FloatingActionButton mAddFab, mdeleteFab, mAddPlaceFab;
+    FloatingActionButton mAddFab;
 
     // These are taken to make visible and invisible along with FABs
     TextView deleteText, addPlaceText, mTextPlaces;
@@ -48,48 +51,16 @@ public class PlacesFragment extends Fragment implements FavoriteLocationsAdapter
 
         mTextPlaces.setText("você ainda não tem nenhum lugar favorito.");
 
-        mdeleteFab.setVisibility(View.GONE);
-        mAddPlaceFab.setVisibility(View.GONE);
-        deleteText.setVisibility(View.GONE);
-        addPlaceText.setVisibility(View.GONE);
-
         isAllFabsVisible = false;
 
         mAddFab.setOnClickListener(view -> {
-
-            if (!isAllFabsVisible) {
-                // when isAllFabsVisible becomes true make all
-                // the action name texts and FABs VISIBLE
-                mdeleteFab.show();
-                mAddPlaceFab.show();
-                deleteText.setVisibility(View.VISIBLE);
-                addPlaceText.setVisibility(View.VISIBLE);
-
-                // make the boolean variable true as we
-                // have set the sub FABs visibility to GONE
-                isAllFabsVisible = true;
-            } else {
-                // when isAllFabsVisible becomes true make
-                // all the action name texts and FABs GONE.
-                mdeleteFab.hide();
-                mAddPlaceFab.hide();
-                deleteText.setVisibility(View.GONE);
-                addPlaceText.setVisibility(View.GONE);
-
-                // make the boolean variable false as we
-                // have set the sub FABs visibility to GONE
-                isAllFabsVisible = false;
-            }
-        });
-
-        mAddPlaceFab.setOnClickListener(View -> {
 
             AppCompatActivity activity = (AppCompatActivity) requireActivity();
 
             Intent intent = new Intent(activity, Mapa.class);
             startActivity(intent);
-
         });
+
 
         // Crie uma instância do seu adaptador
         adapter = new FavoriteLocationsAdapter();
@@ -139,10 +110,7 @@ public class PlacesFragment extends Fragment implements FavoriteLocationsAdapter
     private void InicializaComponents() {
         mTextPlaces = binding.textPlaces;
         mAddFab = binding.addFab;
-        mdeleteFab = binding.deleteFab;
-        mAddPlaceFab = binding.addPlaceFab;
         deleteText = binding.deleteTextFab;
-        addPlaceText = binding.addPlaceTextFab;
     }
 
     @Override
@@ -152,14 +120,53 @@ public class PlacesFragment extends Fragment implements FavoriteLocationsAdapter
     }
 
     @Override
-    public void onItemClick(FavoriteLocation favoriteLocation) {
+    public void onItemClick(FavoriteLocation favoriteLocation, String action) {
         AppCompatActivity activity = (AppCompatActivity) requireActivity();
-        Intent intent = new Intent(activity, Mapa.class);
-        intent.putExtra("Lat",favoriteLocation.getLocationPoint().getLatitude());
-        intent.putExtra("Lng",favoriteLocation.getLocationPoint().getLongitude());
-        intent.putExtra("Radius",favoriteLocation.getRadius());
-        intent.putExtra("Id",favoriteLocation.getId());
 
-        startActivity(intent);
+        switch (action){
+            case "open":
+                Intent intent = new Intent(activity, Mapa.class);
+                intent.putExtra("Lat",favoriteLocation.getLocationPoint().getLatitude());
+                intent.putExtra("Lng",favoriteLocation.getLocationPoint().getLongitude());
+                intent.putExtra("Radius",favoriteLocation.getRadius());
+                intent.putExtra("Id",favoriteLocation.getId());
+                startActivity(intent);
+                break;
+            case "delete":
+                FirebaseFirestore db = FirebaseFirestore.getInstance();
+                        db.collection("usuarios")
+                        .document(FirebaseAuth.getInstance().getCurrentUser().getUid())
+                        .collection("FavoriteLocations").document(favoriteLocation.getId()).delete();
+
+
+                Toast.makeText(activity, "Favorito Removido com sucesso", Toast.LENGTH_SHORT).show();
+
+                db.collection("usuarios")
+                        .document(FirebaseAuth.getInstance().getCurrentUser().getUid())
+                        .collection("FavoriteLocations").get().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    List<FavoriteLocation> favoriteLocations = new ArrayList<>();
+                    for (QueryDocumentSnapshot document : task.getResult()) {
+                        FavoriteLocation location = document.toObject(FavoriteLocation.class);
+                        location.setId(document.getId());
+                        favoriteLocations.add(location);
+                    }
+                    updateUI(favoriteLocations);
+                } else {
+                    // Tratar falha ao obter localizações favoritas do Firebase
+                    Log.e("Firestore", "Error getting documents.", task.getException());
+                }
+            });
+
+            break;
+
+            default:
+
+                break;
+
+        }
+
+
+
     }
 }

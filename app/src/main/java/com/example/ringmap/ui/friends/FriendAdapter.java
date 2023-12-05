@@ -4,12 +4,17 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.ringmap.R;
+import com.example.ringmap.ui.places.FavoriteLocation;
+import com.example.ringmap.ui.places.FavoriteLocationsAdapter;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
@@ -23,6 +28,12 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendAdap
     private List<String> friendList;
 
     static FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+    private FriendAdapter.OnItemClickListener onItemClickListener;
+
+    public void setOnItemClickListener(FriendAdapter.OnItemClickListener listener) {
+        this.onItemClickListener = listener;
+    }
 
     public FriendAdapter() {
         this.friendList = new ArrayList<>();
@@ -45,6 +56,11 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendAdap
     public void onBindViewHolder(@NonNull FriendAdapterHold holder, int position) {
         String user_id = friendList.get(position);
         holder.bind(user_id);
+        holder.bt_delete.setOnClickListener(v -> {
+            if (onItemClickListener != null) {
+                onItemClickListener.onItemClick(user_id);
+            }
+        });
     }
 
     @Override
@@ -55,10 +71,12 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendAdap
     static class FriendAdapterHold extends RecyclerView.ViewHolder {
 
         private TextView userIdTextView;
-
+        private AppCompatButton bt_delete;
         FriendAdapterHold(@NonNull View itemView) {
             super(itemView);
             userIdTextView = itemView.findViewById(R.id.friendID);
+            bt_delete = itemView.findViewById(R.id.bt_delete_friend);
+
         }
 
         void bind(String userID) {
@@ -72,5 +90,8 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendAdap
                 }
             });
         }
+    }
+    public interface OnItemClickListener {
+        void onItemClick(String userId);
     }
 }

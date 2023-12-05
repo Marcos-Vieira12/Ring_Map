@@ -37,6 +37,11 @@
                 android:thumbTint="@color/azul_escuro"
                 />
         </LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+        </LinearLayout>
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/bt_save"
             style="@style/ButtonLogin"
@@ -50,8 +55,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="25dp">
+        android:orientation="horizontal">
         <EditText
             android:backgroundTint="@color/black"
             android:id="@+id/edit_text_radius"
@@ -76,6 +80,18 @@
             android:textColorHint="@color/dark_gray"
             android:gravity="center"/>
     </LinearLayout>
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/favoritar"
+            android:layout_marginTop="10dp"
+            android:layout_width="170dp"
+            android:layout_height="wrap_content"
+            android:text="Salvar Favorito"
+            android:textColor="@color/black"
+            android:gravity="center"
+            android:layout_gravity="right"
+            android:background="@color/azul_claro"
+            android:layout_marginBottom="25dp"/>
+
 
     
 </LinearLayout>

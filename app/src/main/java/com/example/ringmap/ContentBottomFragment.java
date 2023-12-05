@@ -33,7 +33,7 @@ public class ContentBottomFragment extends Fragment {
 
     private EditText editTextNamePlace, editTextRadius;
     private SeekBar seekBar;
-    private AppCompatButton button;
+    private AppCompatButton button, btn_favoritar;
 
 
 
@@ -104,7 +104,19 @@ public class ContentBottomFragment extends Fragment {
             if (name.equals("")){
                 Toast.makeText(activity, "Nome do local obrigatório", Toast.LENGTH_SHORT).show();
             }else {
-                String Message = ("button "+name);
+                String Message = ("favoritar "+name+" alarm");
+                if (mListener != null){
+                    mListener.onFragmentInteraction(Message);
+                }
+            }
+        });
+        btn_favoritar.setOnClickListener(view -> {
+            FragmentActivity activity = (FragmentActivity) requireActivity();
+            String name = editTextNamePlace.getText().toString();
+            if (name.equals("")){
+                Toast.makeText(activity, "Nome do local obrigatório", Toast.LENGTH_SHORT).show();
+            }else {
+                String Message = ("favoritar "+name+ " fav");
                 if (mListener != null){
                     mListener.onFragmentInteraction(Message);
                 }
@@ -141,6 +153,7 @@ public class ContentBottomFragment extends Fragment {
         editTextRadius = binding.editTextRadius;
         seekBar = binding.seekBarRadius;
         button = binding.btSave;
+        btn_favoritar = binding.favoritar;
     }
 
 }

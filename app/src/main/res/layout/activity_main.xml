@@ -75,14 +75,16 @@
         app:layout_constraintTop_toBottomOf="@id/text_esqueceu_senha"
         />
 
-    <androidx.appcompat.widget.AppCompatButton
+    <com.google.android.gms.common.SignInButton
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
         android:id="@+id/bt_login_google"
-        style="@style/ButtonLogin"
         android:text="sign in with google"
         app:layout_constraintStart_toStartOf="@id/containerComponents"
         app:layout_constraintEnd_toEndOf="@id/containerComponents"
         app:layout_constraintTop_toBottomOf="@id/bt_entrar"
         />
+
 
     <ProgressBar
         android:id="@+id/PB_entrar"

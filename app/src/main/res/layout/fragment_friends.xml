@@ -47,83 +47,39 @@
     <!-- Floating action button for add alarm -->
     <!-- Make sure that you are constraining this
          button to the parent button -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/delete_fab"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:backgroundTint="?attr/colorOnPrimary"
-        android:layout_marginBottom="24dp"
-        app:fabSize="normal"
-        app:layout_constraintBottom_toTopOf="@+id/add_fab"
-        app:layout_constraintEnd_toEndOf="@+id/add_fab"
-        app:layout_constraintStart_toStartOf="@+id/add_fab"
-        app:srcCompat="@drawable/baseline_delete_24" />
 
-    <!-- Action name text for the add alarm button -->
-    <!-- Make sure that you are constraining this Text to
-         the add Alarm FAB button -->
-    <TextView
-        android:id="@+id/delete_text_fab"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:text="Remover amigo"
-        app:layout_constraintBottom_toBottomOf="@+id/delete_fab"
-        app:layout_constraintEnd_toStartOf="@+id/delete_fab"
-        app:layout_constraintTop_toTopOf="@+id/delete_fab" />
 
     <!-- Floating action button for add person -->
     <!-- Make sure that you are constraining this
          button to the add Alarm FAB button -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/add_place_fab"
+        android:id="@+id/add_friend_fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:backgroundTint="?attr/colorOnPrimary"
-        android:layout_marginBottom="24dp"
+        android:layout_gravity="end"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:src="@drawable/baseline_person_add_24"
         app:fabSize="normal"
-        app:layout_constraintBottom_toTopOf="@+id/delete_fab"
-        app:layout_constraintEnd_toEndOf="@+id/delete_fab"
-        app:layout_constraintStart_toStartOf="@+id/delete_fab"
-        app:srcCompat="@drawable/baseline_person_add_24" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"  />
 
     <!-- Action name text for the add person button -->
     <!-- Make sure that you are constraining this Text
          to the add Person FAB button -->
-    <TextView
-        android:id="@+id/add_place_text_fab"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:text="adicionar amigo"
-        app:layout_constraintBottom_toBottomOf="@+id/add_place_fab"
-        app:layout_constraintEnd_toStartOf="@+id/add_place_fab"
-        app:layout_constraintTop_toTopOf="@+id/add_place_fab" />
+   <EditText
+       android:id="@+id/edit_email"
+       android:layout_height="24dp"
+       android:layout_width="100dp"
+       android:background="?attr/colorPrimaryVariant"
+       android:textColor="@color/black"
+       android:hint="E-mail"
+       app:layout_constraintEnd_toStartOf="@id/add_friend_fab"
+       app:layout_constraintTop_toTopOf="@id/add_friend_fab"
+       app:layout_constraintBottom_toBottomOf="@id/add_friend_fab" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/see_requests_fab"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:backgroundTint="?attr/colorOnPrimary"
-        android:layout_marginBottom="24dp"
-        app:fabSize="normal"
-        app:layout_constraintBottom_toTopOf="@+id/add_place_fab"
-        app:layout_constraintEnd_toEndOf="@+id/add_place_fab"
-        app:layout_constraintStart_toStartOf="@+id/add_place_fab"
-        app:srcCompat="@drawable/ic_notifications_black_24dp" />
 
-    <!-- Action name text for the add person button -->
-    <!-- Make sure that you are constraining this Text
-         to the add Person FAB button -->
-    <TextView
-        android:id="@+id/see_requests_text_fab"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:text="solicitações de amizade"
-        app:layout_constraintBottom_toBottomOf="@+id/see_requests_fab"
-        app:layout_constraintEnd_toStartOf="@+id/see_requests_fab"
-        app:layout_constraintTop_toTopOf="@+id/see_requests_fab" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 

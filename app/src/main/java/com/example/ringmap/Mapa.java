@@ -161,26 +161,16 @@ public class Mapa extends FragmentActivity implements LocationListener, Persiste
     @Override
     public void onFragmentInteraction(String message) {
         String[] args = message.split(" ");
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        LatLng position = marker.getPosition();
+        GeoPoint geoPoint = new GeoPoint(position.latitude, position.longitude);
+        Map<String, Object> dadosDocumento = new HashMap<>();
+        dadosDocumento.put("locationName", args[1]);
+        dadosDocumento.put("locationPoint", geoPoint);
+        dadosDocumento.put("radius", circle.getRadius());
         switch (args[0]) {
             case "editTextRadius":
                 circle.setRadius(Integer.parseInt(args[1]));
-                break;
-            case "button":
-                String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                LatLng position = marker.getPosition();
-                GeoPoint geoPoint = new GeoPoint(position.latitude, position.longitude);
-                Map<String, Object> dadosDocumento = new HashMap<>();
-                dadosDocumento.put("locationName", args[1]);
-                dadosDocumento.put("locationPoint", geoPoint);
-                dadosDocumento.put("radius", circle.getRadius());
-                FirebaseFirestore.getInstance().
-                        collection("usuarios")
-                        .document(userId)
-                        .collection("FavoriteLocations").add(dadosDocumento);
-//                Intent intent = new Intent(Mapa.this, tela_inicial.class);
-//                startActivity(intent);
-//                finish();
-                StartAlarm();
                 break;
             case "CancelAlarm":
                 FLAG_ALARM = false;
@@ -193,6 +183,25 @@ public class Mapa extends FragmentActivity implements LocationListener, Persiste
                 Toast.makeText(Mapa.this, "Alarme Cancelado", Toast.LENGTH_SHORT).show();
 
                 break;
+            case "favoritar":
+                if(locationId == null){
+                    FirebaseFirestore.getInstance().
+                            collection("usuarios")
+                            .document(userId)
+                            .collection("FavoriteLocations").add(dadosDocumento);
+                } else{
+                    FirebaseFirestore.getInstance().
+                            collection("usuarios")
+                            .document(userId)
+                            .collection("FavoriteLocations").document(locationId).set(dadosDocumento);
+                }
+                if(args[2].equals("alarm")){
+                    StartAlarm();
+                } else{
+                    Toast.makeText(this, "Favorito salvo com sucesso!", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(Mapa.this, tela_inicial.class);
+                    startActivity(intent);
+                }
             default:
 
                 break;

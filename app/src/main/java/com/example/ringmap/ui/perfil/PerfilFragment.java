@@ -27,7 +27,7 @@ import com.google.firebase.firestore.FirebaseFirestoreException;
 public class PerfilFragment extends Fragment {
 
     private Button btn_deslogar;
-    private TextView text_email, text_user;
+    private TextView text_email, text_user, text_id;
 
     FirebaseFirestore db = FirebaseFirestore.getInstance();
 
@@ -37,6 +37,7 @@ public class PerfilFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
+
 
 
         binding = FragmentPerfilBinding.inflate(inflater, container, false);
@@ -68,6 +69,7 @@ public class PerfilFragment extends Fragment {
                 if(documentSnapshot != null) {
                     text_user.setText(documentSnapshot.getString("nome"));
                     text_email.setText(email);
+                    text_id.setText(usuarioID);
                 }
             }
         });
@@ -83,5 +85,6 @@ public class PerfilFragment extends Fragment {
         btn_deslogar = binding.btDeslogar;
         text_email = binding.textEmail;
         text_user = binding.textNome;
+        text_id = binding.textId;
     }
 }

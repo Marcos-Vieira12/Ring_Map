@@ -3,6 +3,7 @@ package com.example.ringmap;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import android.Manifest;
@@ -28,6 +29,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -50,7 +52,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView text_tela_cadastro;
     private TextView text_esqueceu_senha;
     private EditText edit_email, edit_senha;
-    private Button btn_entrar, btn_google;
+    private Button btn_entrar;
+    private SignInButton btn_google;
     private ProgressBar progressBar;
     String[] mensagens = {"Preecha todos os campos!!!", "Login efetuado com sucesso!!!", "As senhas devem ser iguais!!!"};
     FirebaseAuth auth;
@@ -139,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
                 firebaseAuth(account.getIdToken());
 
             } catch (Exception e) {
-                btn_google.setText(e.getMessage());
+                Toast.makeText(this, "erro ao acessar sua conta google",Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -222,7 +225,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void TelaPrincipal () {
-        Intent intent = new Intent(MainActivity.this, Tela_principal.class);
+        Intent intent = new Intent(MainActivity.this, tela_inicial.class);
         startActivity(intent);
         finish();
     }

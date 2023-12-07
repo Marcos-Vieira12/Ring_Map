@@ -69,12 +69,12 @@
     <!-- Make sure that you are constraining this Text
          to the add Person FAB button -->
    <EditText
-       android:id="@+id/edit_email"
+       android:id="@+id/edit_id"
        android:layout_height="24dp"
-       android:layout_width="100dp"
+       android:layout_width="wrap_content"
        android:background="?attr/colorPrimaryVariant"
        android:textColor="@color/black"
-       android:hint="E-mail"
+       android:hint="Digite o código do usuário do usuário"
        app:layout_constraintEnd_toStartOf="@id/add_friend_fab"
        app:layout_constraintTop_toTopOf="@id/add_friend_fab"
        app:layout_constraintBottom_toBottomOf="@id/add_friend_fab" />

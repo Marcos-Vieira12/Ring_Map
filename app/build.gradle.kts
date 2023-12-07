@@ -50,6 +50,7 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("com.firebaseui:firebase-ui-auth:8.0.0")
     implementation("com.google.android.gms:play-services-location:21.0.1")
+    implementation ("com.facebook.android:facebook-login:latest.release")
         // Import the BoM for the Firebase platform
         implementation(platform("com.google.firebase:firebase-bom:32.3.1"))
 

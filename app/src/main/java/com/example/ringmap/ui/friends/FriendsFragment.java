@@ -49,7 +49,7 @@ public class FriendsFragment extends Fragment implements FriendAdapter.OnItemCli
 
     // These are taken to make visible and invisible along with FABs
     TextView mTextPlaces;
-    EditText textEmail;
+    EditText textId;
 
     // to check whether sub FAB buttons are visible or not.
     Boolean isAllFabsVisible;
@@ -65,7 +65,7 @@ public class FriendsFragment extends Fragment implements FriendAdapter.OnItemCli
 
         InicializaComponents();
 
-        textEmail.setVisibility(View.GONE);
+        textId.setVisibility(View.GONE);
         isAllFabsVisible = false;
 
         mAddFab.setOnClickListener( view -> {
@@ -73,46 +73,64 @@ public class FriendsFragment extends Fragment implements FriendAdapter.OnItemCli
             if (!isAllFabsVisible) {
                 // when isAllFabsVisible becomes true make all
                 // the action name texts and FABs VISIBLE
-                textEmail.setVisibility(View.VISIBLE);
+                textId.setVisibility(View.VISIBLE);
                 // make the boolean variable true as we
                 // have set the sub FABs visibility to GONE
                 isAllFabsVisible = true;
             } else {
                 // when isAllFabsVisible becomes true make
                 // all the action name texts and FABs GONE.
-                textEmail.setVisibility(View.GONE);
+                textId.setVisibility(View.GONE);
+                if(!textId.getText().toString().equals("")) {
 
-                // make the boolean variable false as we
-                // have set the sub FABs visibility to GONE
-                FirebaseAuth auth = FirebaseAuth.getInstance();
-                String userEmail = textEmail.getText().toString(); // Supondo que text_email seja o TextView que contém o email
-                DocumentReference ref = FirebaseFirestore.getInstance().collection("usuarios").document(userEmail);
-                ref.get()
-                        .addOnCompleteListener(task -> {
-                            if (task.isSuccessful()) {
-                                DocumentSnapshot document = task.getResult();
-                                if (document.exists()) {
-                                    // O documento existe
-                                    Map<String, Object> Update = new HashMap<>();
-                                    Update.put("amigos", FieldValue.arrayUnion(userEmail));
-                                    FirebaseFirestore.getInstance().collection("usuarios")
-                                            .document(auth.getCurrentUser().getUid())
-                                            .update(Update);
-                                } else {
-                                    // O documento não existe
-                                    Log.d("TAG", "Documento não encontrado.");
-                                }
+
+                    // make the boolean variable false as we
+                    // have set the sub FABs visibility to GONE
+                    FirebaseAuth auth = FirebaseAuth.getInstance();
+                    String userId = textId.getText().toString(); // Supondo que text_email seja o TextView que contém o email
+                    DocumentReference ref = FirebaseFirestore.getInstance()
+                            .collection("usuarios")
+                            .document(userId);
+                    ref.get().addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            DocumentSnapshot document = task.getResult();
+                            if (document != null && document.exists()) {
+                                Map<String, Object> Update = new HashMap<>();
+                                Update.put("amigos", FieldValue.arrayUnion(userId));
+                                DocumentReference docRef = FirebaseFirestore
+                                        .getInstance()
+                                        .collection("usuarios")
+                                        .document(auth.getCurrentUser().getUid());
+                                docRef.update(Update).addOnCompleteListener(task1 -> {
+                                    if (task1.isSuccessful()) {
+
+                                        docRef.get().addOnCompleteListener(task2 -> {
+                                            if (task.isSuccessful()){
+                                                DocumentSnapshot document2 = task.getResult();
+                                                List<String> amigosIds = (ArrayList<String>) document2.get("amigos");
+                                                updateUI(amigosIds);
+                                            }
+
+                                        });
+                                        Toast.makeText(getActivity(), "sucesso!", Toast.LENGTH_SHORT).show();
+
+                                    }
+
+                                });
                             } else {
-                                // Tratar falha na leitura do documento
-                                Log.e("TAG", "Erro ao obter documento", task.getException());
+                                Toast.makeText(getActivity(), "usuario não encontrado", Toast.LENGTH_SHORT).show();
                             }
-                        });
+                        } else {
+                            Toast.makeText(getActivity(), "falha na conexão", Toast.LENGTH_SHORT).show();
+                        }
+                    });
 
+                }
 
                 isAllFabsVisible = false;
             }
         });
-        mTextPlaces.setText("você ainda não tem nenhum amigo :(");
+        mTextPlaces.setText("você ainda não seguiu ninguém :(");
 
         adapter = new FriendAdapter();
         adapter.setOnItemClickListener(this);
@@ -168,7 +186,7 @@ public class FriendsFragment extends Fragment implements FriendAdapter.OnItemCli
     private void InicializaComponents() {
         mTextPlaces = binding.textFriends;
         mAddFab = binding.addFriendFab;
-        textEmail = binding.editEmail;
+        textId = binding.editId;
     }
 
     @Override
@@ -179,7 +197,6 @@ public class FriendsFragment extends Fragment implements FriendAdapter.OnItemCli
 
     @Override
     public void onItemClick(String amigoId) {
-        Toast.makeText((AppCompatActivity) requireActivity(), "clicou", Toast.LENGTH_SHORT).show();
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         Map<String, Object> updateData = new HashMap<>();

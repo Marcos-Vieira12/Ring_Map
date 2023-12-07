@@ -133,30 +133,36 @@ public class PlacesFragment extends Fragment implements FavoriteLocationsAdapter
                 startActivity(intent);
                 break;
             case "delete":
-                FirebaseFirestore db = FirebaseFirestore.getInstance();
-                        db.collection("usuarios")
+                CollectionReference colRef = FirebaseFirestore.getInstance()
+                        .collection("usuarios")
                         .document(FirebaseAuth.getInstance().getCurrentUser().getUid())
-                        .collection("FavoriteLocations").document(favoriteLocation.getId()).delete();
+                        .collection("FavoriteLocations");
+
+                        colRef.document(favoriteLocation.getId())
+                                .delete().addOnCompleteListener(task -> {
+                                    if (task.isSuccessful()) {
+                                        Toast.makeText(activity, "Favorito Removido com sucesso", Toast.LENGTH_SHORT).show();
+                                        colRef.get().addOnCompleteListener(task2 -> {
+                                            if (task2.isSuccessful()) {
+                                                List<FavoriteLocation> favoriteLocations = new ArrayList<>();
+                                                for (QueryDocumentSnapshot document : task2.getResult()) {
+                                                    FavoriteLocation location = document.toObject(FavoriteLocation.class);
+                                                    location.setId(document.getId());
+                                                    favoriteLocations.add(location);
+                                                }
+                                                updateUI(favoriteLocations);
+                                            } else {
+                                                // Tratar falha ao obter localizações favoritas do Firebase
+                                                Toast.makeText(activity, "problema de conexão", Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
+                                    } else {
+                                        // Tratar falha ao obter localizações favoritas do Firebase
+                                        Toast.makeText(activity, "erro ao remover usuario", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
 
 
-                Toast.makeText(activity, "Favorito Removido com sucesso", Toast.LENGTH_SHORT).show();
-
-                db.collection("usuarios")
-                        .document(FirebaseAuth.getInstance().getCurrentUser().getUid())
-                        .collection("FavoriteLocations").get().addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    List<FavoriteLocation> favoriteLocations = new ArrayList<>();
-                    for (QueryDocumentSnapshot document : task.getResult()) {
-                        FavoriteLocation location = document.toObject(FavoriteLocation.class);
-                        location.setId(document.getId());
-                        favoriteLocations.add(location);
-                    }
-                    updateUI(favoriteLocations);
-                } else {
-                    // Tratar falha ao obter localizações favoritas do Firebase
-                    Log.e("Firestore", "Error getting documents.", task.getException());
-                }
-            });
 
             break;
 

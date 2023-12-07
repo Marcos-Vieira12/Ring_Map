@@ -9,7 +9,7 @@
     <item
         android:id="@+id/navigation_friends"
         android:icon="@drawable/baseline_people_24"
-        android:title="amigos" />
+        android:title="seguindo" />
 
     <item
         android:id="@+id/navigation_perfil"

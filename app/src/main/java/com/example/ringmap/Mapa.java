@@ -1,5 +1,7 @@
 package com.example.ringmap;
 
+import static java.lang.Thread.sleep;
+
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -15,6 +17,8 @@ import android.Manifest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
@@ -67,6 +71,7 @@ public class Mapa extends FragmentActivity implements LocationListener, Persiste
     // Infle o layout do conteúdo no bottom_fragment
 
     ContentBottomFragment contentBottomFragment = new ContentBottomFragment(); // Substitua pelo nome do seu Fragment
+
 
     AlarmFragment alarmFragment = new AlarmFragment();
 
@@ -123,7 +128,6 @@ public class Mapa extends FragmentActivity implements LocationListener, Persiste
         fragmentTransaction.commit();
 
 
-
     }
 
     @Override
@@ -144,7 +148,7 @@ public class Mapa extends FragmentActivity implements LocationListener, Persiste
 
     private boolean verify_destiny(LatLng userLatLng) {
 // Obtém as coordenadas do centro do círculo
-        if(circle == null || userLatLng == null){
+        if (circle == null || userLatLng == null) {
             return false;
         }
         double circleLatitude = circle.getCenter().latitude;
@@ -184,20 +188,20 @@ public class Mapa extends FragmentActivity implements LocationListener, Persiste
 
                 break;
             case "favoritar":
-                if(locationId == null){
+                if (locationId == null) {
                     FirebaseFirestore.getInstance().
                             collection("usuarios")
                             .document(userId)
                             .collection("FavoriteLocations").add(dadosDocumento);
-                } else{
+                } else {
                     FirebaseFirestore.getInstance().
                             collection("usuarios")
                             .document(userId)
                             .collection("FavoriteLocations").document(locationId).set(dadosDocumento);
                 }
-                if(args[2].equals("alarm")){
+                if (args[2].equals("alarm")) {
                     StartAlarm();
-                } else{
+                } else {
                     Toast.makeText(this, "Favorito salvo com sucesso!", Toast.LENGTH_SHORT).show();
                     Intent intent = new Intent(Mapa.this, tela_inicial.class);
                     startActivity(intent);
@@ -210,7 +214,6 @@ public class Mapa extends FragmentActivity implements LocationListener, Persiste
     }
 
 
-
     private void StartAlarm() {
         FLAG_ALARM = true;
         fragmentTransaction = fragmentManager.beginTransaction();
@@ -220,7 +223,7 @@ public class Mapa extends FragmentActivity implements LocationListener, Persiste
     }
 
     public void jump(LatLng latLng, int radius) {
-        if (FLAG_ALARM == false){
+        if (FLAG_ALARM == false) {
             if (marker != null)
                 marker.remove();
             marker = mMap.addMarker(new MarkerOptions().position(latLng));
@@ -243,8 +246,8 @@ public class Mapa extends FragmentActivity implements LocationListener, Persiste
         }
 
 
-
     }
+
     public void jump(LatLng latLng) {
         // Chama a versão principal com o valor padrão de 500 para optionalValue
         jump(latLng, 500);
@@ -255,13 +258,13 @@ public class Mapa extends FragmentActivity implements LocationListener, Persiste
     public void onMapReady(@NonNull GoogleMap googleMap) {
         mMap = googleMap;
         Bundle extras = getIntent().getExtras();
-        if(extras != null){
+        if (extras != null) {
 
-            LatLng latLng = new LatLng(extras.getDouble("Lat"),extras.getDouble("Lng"));
+            LatLng latLng = new LatLng(extras.getDouble("Lat"), extras.getDouble("Lng"));
             jump(latLng, extras.getInt("Radius"));
             locationId = extras.getString("Id");
 
-        } else{
+        } else {
             Toast.makeText(Mapa.this, "Alarme Cancelado", Toast.LENGTH_SHORT).show();
         }
         // Habilitar a camada de tráfego para uma melhor visualização (opcional)
@@ -269,22 +272,15 @@ public class Mapa extends FragmentActivity implements LocationListener, Persiste
 
         // Habilitar a camada de localização do usuário
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.POST_NOTIFICATIONS},
+                    3030);
             return;
 
         }
         mMap.setMyLocationEnabled(true);
 
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME, MIN_DISTANCE, (LocationListener) this);
-        Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        //LatLng quixada = new LatLng(location.getLatitude(),location.getLongitude());
-        //marker = mMap.addMarker(new MarkerOptions().position(quixada).title("Quixadá"));
 
         mMap.setOnMapClickListener(this::onMapClick);
         //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(quixada, 14));

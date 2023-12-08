@@ -88,13 +88,11 @@ public class FriendsFragment extends Fragment implements FriendAdapter.OnItemCli
                     // have set the sub FABs visibility to GONE
                     FirebaseAuth auth = FirebaseAuth.getInstance();
                     String userId = textId.getText().toString(); // Supondo que text_email seja o TextView que contém o email
-                    DocumentReference ref = FirebaseFirestore.getInstance()
-                            .collection("usuarios")
-                            .document(userId);
+                    DocumentReference ref = FirebaseFirestore.getInstance().collection("usuarios").document(userId);
                     ref.get().addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
                             DocumentSnapshot document = task.getResult();
-                            if (document != null && document.exists()) {
+                            if (document.exists()) {
                                 Map<String, Object> Update = new HashMap<>();
                                 Update.put("amigos", FieldValue.arrayUnion(userId));
                                 DocumentReference docRef = FirebaseFirestore
@@ -103,17 +101,16 @@ public class FriendsFragment extends Fragment implements FriendAdapter.OnItemCli
                                         .document(auth.getCurrentUser().getUid());
                                 docRef.update(Update).addOnCompleteListener(task1 -> {
                                     if (task1.isSuccessful()) {
-
                                         docRef.get().addOnCompleteListener(task2 -> {
                                             if (task.isSuccessful()){
-                                                DocumentSnapshot document2 = task.getResult();
+                                                DocumentSnapshot document2 = task2.getResult();
                                                 List<String> amigosIds = (ArrayList<String>) document2.get("amigos");
-                                                updateUI(amigosIds);
+                                                if (amigosIds != null)
+                                                    updateUI(amigosIds);
                                             }
 
                                         });
                                         Toast.makeText(getActivity(), "sucesso!", Toast.LENGTH_SHORT).show();
-
                                     }
 
                                 });
@@ -177,10 +174,10 @@ public class FriendsFragment extends Fragment implements FriendAdapter.OnItemCli
             mTextPlaces.setText("Você ainda não tem nenhum lugar favorito.");
         } else {
             mTextPlaces.setText(""); // Limpa a mensagem anterior
-
+        }
             // Atualiza o RecyclerView com os locais favoritos
             adapter.setFriendAdapters(friends);
-        }
+
     }
 
     private void InicializaComponents() {
@@ -201,23 +198,27 @@ public class FriendsFragment extends Fragment implements FriendAdapter.OnItemCli
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         Map<String, Object> updateData = new HashMap<>();
         updateData.put("amigos", FieldValue.arrayRemove(amigoId));
+        DocumentReference docRef = db.collection("usuarios")
+                .document(FirebaseAuth.getInstance().getCurrentUser().getUid());
 
-        db.collection("usuarios")
-                        .document(FirebaseAuth.getInstance().getCurrentUser().getUid())
-                                .update(updateData);
-
-        db.collection("usuarios")
-                .document(FirebaseAuth.getInstance().getCurrentUser().getUid())
-                .get().addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        DocumentSnapshot document = task.getResult();
-                        if (document != null && document.exists()) {
-                            // Obtém o array de IDs dos amigos do campo "Amigos"
-                            List<String> amigosIds = (ArrayList<String>) document.get("amigos");
-                            updateUI(amigosIds);
-                        }
+        docRef
+                .update(updateData).addOnCompleteListener(task -> {
+                    if (task.isSuccessful()){
+                              docRef.get().addOnCompleteListener(task1 -> {
+                                  if (task1.isSuccessful()) {
+                                      DocumentSnapshot document = task1.getResult();
+                                      if (document != null && document.exists()) {
+                                          // Obtém o array de IDs dos amigos do campo "Amigos"
+                                          List<String> amigosIds = (ArrayList<String>) document.get("amigos");
+                                          updateUI(amigosIds);
+                                          Toast.makeText(getActivity(), "sucesso!", Toast.LENGTH_SHORT).show();
+                                      }
 
 
+                                  }
+                              });
+                    } else{
+                        Toast.makeText(getActivity(), "erro ao remover", Toast.LENGTH_SHORT).show();
                     }
                 });
 
